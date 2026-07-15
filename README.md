@@ -88,21 +88,37 @@ require("tracegraph").setup({
 })
 ```
 
-## Alternatives
+## Comparison with alternatives
 
-- [litee-calltree.nvim](https://github.com/ldelossa/litee-calltree.nvim) —
-  full IDE-style call-hierarchy UI on the litee.nvim framework; hooks the
-  global LSP `callHierarchy` handlers. Much larger surface.
-- [calltree.nvim](https://github.com/wilriker/calltree.nvim) — similar
-  handler-hooking approach, maintained fork lineage of the original calltree.
-- [telescope-hierarchy.nvim](https://github.com/jmacadie/telescope-hierarchy.nvim) —
-  call hierarchy inside a Telescope picker instead of a persistent panel.
-- Built-in `vim.lsp.buf.incoming_calls()` / Telescope
-  `lsp_incoming_calls` — single level only, no recursive expansion.
+All of these build on the same LSP `callHierarchy` protocol and support
+recursive expansion; they differ in dependencies, how they talk to the LSP,
+and how much they bring along.
 
-tracegraph.nvim is the minimal take: one file, no framework dependency, no
-handler hijacking (plain `client:request`), panel + preview + direction
-switch and nothing else.
+|  | tracegraph.nvim | [litee-calltree.nvim](https://github.com/ldelossa/litee-calltree.nvim) | [calltree.nvim](https://github.com/wilriker/calltree.nvim) | [telescope-hierarchy.nvim](https://github.com/jmacadie/telescope-hierarchy.nvim) |
+| --- | --- | --- | --- | --- |
+| Dependencies | none | litee.nvim framework | none | telescope.nvim + plenary |
+| UI | side panel | litee panel (shared with other litee plugins) | side panel + document outline | Telescope picker |
+| LSP integration | direct `client:request` calls | hijacks the global `callHierarchy` handlers | hijacks the global handlers | direct requests |
+| Invoked via | `:Tracegraph` / lua API | `vim.lsp.buf.incoming_calls()` | `vim.lsp.buf.incoming_calls()` | `:Telescope hierarchy` |
+| Lazy recursive expand | ✓ (one request per expand) | ✓ | ✓ | ✓ (plus multi-level `E`) |
+| Switch direction in-session | ✓ (`s`) | ✓ (`S`) | ✓ (`s`) | ✓ (`s`) |
+| Recursion (cycle) marking | ✓ (`↻`, blocks infinite descent) | — | — | — |
+| Call-site count (`×N`) | ✓ | — | — | — |
+| Inline preview | ✓ (float, `p`) | LSP hover (`i`) | LSP hover (`i`) | ✓ (Telescope previewer) |
+| Scope | one file, tree only | IDE-style suite | tree + symbol outline | picker, experimental type hierarchy |
+
+Reasons to pick one of the others: **litee-calltree** if you want a
+cohesive multi-panel IDE layer (calltree + symboltree + bookmarks) that
+plugs into `vim.lsp.buf.*` transparently; **telescope-hierarchy** if you
+live in Telescope and prefer a transient picker over a persistent panel.
+
+Reasons to pick tracegraph: zero dependencies, no global LSP handler
+hijacking (your `vim.lsp.buf.incoming_calls()` stays untouched), recursion
+detection, and a codebase small enough to read in one sitting.
+
+Built-in `vim.lsp.buf.incoming_calls()` and Telescope's
+`lsp_incoming_calls` remain the no-plugin baseline — single level only, no
+recursive expansion.
 
 ## License
 
