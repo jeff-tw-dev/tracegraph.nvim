@@ -8,8 +8,15 @@ local M = {}
 local ns = vim.api.nvim_create_namespace("tracegraph")
 
 M.config = {
-  -- side panel width (columns)
-  width = 56,
+  panel = {
+    width = 56, -- panel width (columns)
+    position = "right", -- "right" | "left"
+  },
+  preview = {
+    context = 7, -- source lines shown above/below the call site (height = 2*context + 1)
+    max_width = 100, -- float never grows wider than this
+    border = "rounded", -- any value accepted by nvim_open_win() border
+  },
   -- panel-local keymaps; each value is a key or a list of keys
   keys = {
     expand = { "o", "<Tab>" }, -- expand/collapse node
@@ -29,7 +36,12 @@ M.config = {
 }
 
 function M.setup(opts)
-  M.config = vim.tbl_deep_extend("force", M.config, opts or {})
+  opts = opts or {}
+  if opts.width then -- pre-0.2 top-level `width`
+    opts.panel = vim.tbl_extend("keep", opts.panel or {}, { width = opts.width })
+    opts.width = nil
+  end
+  M.config = vim.tbl_deep_extend("force", M.config, opts)
 end
 
 -- Single panel state (only one open at a time)
@@ -282,10 +294,11 @@ local function preview()
   local bufnr = vim.uri_to_bufnr(uri)
   vim.fn.bufload(bufnr)
 
+  local pv = M.config.preview
   local total = vim.api.nvim_buf_line_count(bufnr)
   local center = range.start.line
-  local first = math.max(0, center - 7)
-  local last = math.min(total, center + 8)
+  local first = math.max(0, center - pv.context)
+  local last = math.min(total, center + pv.context + 1)
 
   local float_buf = vim.api.nvim_create_buf(false, true)
   local src_lines = vim.api.nvim_buf_get_lines(bufnr, first, last, false)
@@ -293,7 +306,7 @@ local function preview()
   vim.bo[float_buf].filetype = vim.bo[bufnr].filetype
   vim.bo[float_buf].bufhidden = "wipe"
 
-  local width = math.min(100, math.max(40, vim.o.columns - 20))
+  local width = math.min(pv.max_width, math.max(40, vim.o.columns - 20))
   local float_win = vim.api.nvim_open_win(float_buf, false, {
     relative = "cursor",
     row = 1,
@@ -301,7 +314,7 @@ local function preview()
     width = width,
     height = #src_lines,
     style = "minimal",
-    border = "rounded",
+    border = pv.border,
     title = (" %s:%d "):format(short_path(uri), range.start.line + 1),
   })
   vim.api.nvim_buf_clear_namespace(float_buf, ns, 0, -1)
@@ -353,9 +366,9 @@ end
 
 local function create_panel()
   local prev_win = vim.api.nvim_get_current_win()
-  vim.cmd("botright vsplit")
+  vim.cmd(M.config.panel.position == "left" and "topleft vsplit" or "botright vsplit")
   local win = vim.api.nvim_get_current_win()
-  vim.api.nvim_win_set_width(win, M.config.width)
+  vim.api.nvim_win_set_width(win, M.config.panel.width)
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_win_set_buf(win, buf)
 

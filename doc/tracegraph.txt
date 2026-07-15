@@ -42,9 +42,18 @@ Defaults (configurable via setup):
 ==============================================================================
 CONFIGURATION                                              *tracegraph-config*
 
+setup() is optional; pass only what you want to change (deep-merged).
 Defaults: >lua
     require("tracegraph").setup({
-      width = 56,
+      panel = {
+        width = 56,
+        position = "right",
+      },
+      preview = {
+        context = 7,
+        max_width = 100,
+        border = "rounded",
+      },
       keys = {
         expand = { "o", "<Tab>" },
         jump = "<CR>",
@@ -62,5 +71,49 @@ Defaults: >lua
       },
     })
 <
+                                                     *tracegraph-config-panel*
+panel.width         (number, default 56)
+    Width of the tree panel in columns. The panel sets 'winfixwidth', so
+    it keeps this width across layout changes.
+
+panel.position      (string, default "right")
+    "right" opens the panel as a botright vsplit, "left" as a topleft
+    vsplit.
+
+                                                   *tracegraph-config-preview*
+preview.context     (number, default 7)
+    Lines of source shown above and below the call site in the preview
+    float. The float's height is 2 * context + 1, clamped at file
+    boundaries.
+
+preview.max_width   (number, default 100)
+    The float's width follows the editor width minus margins, but never
+    exceeds this.
+
+preview.border      (default "rounded")
+    Passed straight to |nvim_open_win()|: "single", "double", "none", a
+    char array, ...
+
+                                                      *tracegraph-config-keys*
+keys.*
+    Panel-local keymaps. Each value is a single key ("q") or a list of
+    keys ({ "q", "<Esc>" }); every listed key is mapped. The first key of
+    each entry is shown in the panel's help header.
+
+    expand      expand/collapse node; first expand of a node issues one
+                LSP request
+    jump        jump to the call site in the previous window (the root
+                has no call site, so it jumps to the definition)
+    definition  jump to the node's definition
+    preview     open the call-site float; closes on cursor move
+    switch      reopen the same root in the opposite direction
+    close       close the panel
+
+                                                     *tracegraph-config-icons*
+icons.*
+    Node state markers: loading (request in flight), recursive (node
+    already in its own ancestor chain), leaf (no further callers or
+    callees), expanded, collapsed.
+
 ==============================================================================
 vim:tw=78:ts=8:noet:ft=help:norl:

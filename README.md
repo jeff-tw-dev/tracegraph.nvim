@@ -65,12 +65,21 @@ Put the cursor on a function/method name, then:
 
 ## Configuration
 
-Defaults shown; all fields optional:
+`setup()` is optional — every field below is a default, and you only pass
+what you want to change (tables are deep-merged):
 
 ```lua
 require("tracegraph").setup({
-  width = 56, -- side panel width
-  keys = {    -- panel-local keymaps; a key or a list of keys
+  panel = {
+    width = 56,          -- panel width in columns
+    position = "right",  -- which side the panel opens on: "right" | "left"
+  },
+  preview = {
+    context = 7,         -- source lines above/below the call site
+    max_width = 100,     -- upper bound on the float's width
+    border = "rounded",  -- border style of the float
+  },
+  keys = {               -- panel-local keymaps; a key or a list of keys
     expand = { "o", "<Tab>" },
     jump = "<CR>",
     definition = "gd",
@@ -79,14 +88,34 @@ require("tracegraph").setup({
     close = "q",
   },
   icons = {
-    loading = "…",
-    recursive = "↻",
-    leaf = "·",
+    loading = "…",       -- LSP request in flight
+    recursive = "↻",     -- node already appears in its ancestor chain
+    leaf = "·",          -- no further callers/callees
     expanded = "",
     collapsed = "",
   },
 })
 ```
+
+### Options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `panel.width` | number | `56` | Width of the tree panel in columns. The panel is `winfixwidth`, so it keeps this width across layout changes. |
+| `panel.position` | string | `"right"` | `"right"` opens the panel as a `botright vsplit`, `"left"` as a `topleft vsplit`. |
+| `preview.context` | number | `7` | Lines of source shown above and below the call site in the `p` preview float — its height is `2 * context + 1` (clamped at file boundaries). |
+| `preview.max_width` | number | `100` | The float's width is the editor width minus margins, but never more than this. |
+| `preview.border` | any | `"rounded"` | Passed straight to `nvim_open_win()` — `"single"`, `"double"`, `"none"`, a char array, ... |
+| `keys.expand` | key(s) | `{ "o", "<Tab>" }` | Expand/collapse the node under the cursor. Expanding an unvisited node issues one LSP request. |
+| `keys.jump` | key(s) | `"<CR>"` | Jump to the call site in the previous window (the root has no call site, so it jumps to the definition). |
+| `keys.definition` | key(s) | `"gd"` | Jump to the node's definition. |
+| `keys.preview` | key(s) | `"p"` | Open the call-site preview float; it closes on cursor move. |
+| `keys.switch` | key(s) | `"s"` | Reopen the tree in the opposite direction (incoming ⇄ outgoing) for the same root. |
+| `keys.close` | key(s) | `"q"` | Close the panel. |
+| `icons.*` | string | see above | Node state markers rendered in the tree. The first key of each `keys` entry is what the panel's help header displays. |
+
+Every `keys` value accepts either a single key (`"q"`) or a list of keys
+(`{ "q", "<Esc>" }`) — each one is mapped.
 
 ## Comparison with alternatives
 
