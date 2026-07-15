@@ -2,10 +2,12 @@
 
 Recursive call-trace tree for Neovim, built on LSP `callHierarchy`.
 
-With the cursor on a function, open a side panel and expand
-**caller-of-caller** (incoming) or **callee-of-callee** (outgoing) level by
-level. Each expand issues exactly one more LSP request, so the tree is
-naturally lazy — no upfront whole-project analysis.
+With the cursor on a function, open a side panel and walk the call chain
+in either direction — who calls the callers (incoming), or what the
+callees call in turn (outgoing). Each expand issues exactly one more LSP
+request, so the tree is naturally lazy — no upfront whole-project
+analysis, no LSP handler hijacking, and recursion is detected and marked
+instead of looping.
 
 ```
  Incoming: handle_request (callers)
@@ -85,6 +87,22 @@ require("tracegraph").setup({
   },
 })
 ```
+
+## Alternatives
+
+- [litee-calltree.nvim](https://github.com/ldelossa/litee-calltree.nvim) —
+  full IDE-style call-hierarchy UI on the litee.nvim framework; hooks the
+  global LSP `callHierarchy` handlers. Much larger surface.
+- [calltree.nvim](https://github.com/wilriker/calltree.nvim) — similar
+  handler-hooking approach, maintained fork lineage of the original calltree.
+- [telescope-hierarchy.nvim](https://github.com/jmacadie/telescope-hierarchy.nvim) —
+  call hierarchy inside a Telescope picker instead of a persistent panel.
+- Built-in `vim.lsp.buf.incoming_calls()` / Telescope
+  `lsp_incoming_calls` — single level only, no recursive expansion.
+
+tracegraph.nvim is the minimal take: one file, no framework dependency, no
+handler hijacking (plain `client:request`), panel + preview + direction
+switch and nothing else.
 
 ## License
 
