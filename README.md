@@ -9,6 +9,14 @@ request, so the tree is naturally lazy — no upfront whole-project
 analysis, no LSP handler hijacking, and recursion is detected and marked
 instead of looping.
 
+![tracegraph.nvim walking a six-frame call chain](demo/tracegraph.gif)
+
+The recording traces `logging.Debugf` in [`demo/shop`](demo/shop) — a
+helper five packages call — and walks one branch back up through
+`pricing.Total`, `service.PlaceOrder`, `api.handleCheckout` and `api.Run`
+to `main`, one LSP request per expand. See [`demo/`](demo) to run it
+yourself.
+
 ```
  Incoming: handle_request (callers)
  o:expand <CR>:call site gd:def p:preview s:direction q:quit
